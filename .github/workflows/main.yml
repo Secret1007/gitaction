@@ -33,7 +33,6 @@ jobs:
         with:
           server: ${{ secrets._HOST }}
           username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           local_path: './dist/*'
