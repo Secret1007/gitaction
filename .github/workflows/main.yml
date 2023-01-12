@@ -31,7 +31,7 @@ jobs:
       - name: copy file via ssh password
         uses: wlixcc/SFTP-Deploy-Action@v1.0 
         with:
-          server: ${{ secrets._HOST }}
+          server: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
