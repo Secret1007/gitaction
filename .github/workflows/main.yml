@@ -29,11 +29,13 @@ jobs:
       - name: build app
         run: npm run build
       - name: copy file via ssh password
-        uses: appleboy/scp-action@master
+        uses: wlixcc/SFTP-Deploy-Action@v1.0 
         with:
-          host: ${{ secrets._HOST }}
+          server: ${{ secrets._HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: "docs/"
-          target: '/root/e'
+          local_path: './dist/*'
+          remote_path: '/root/e'
+
