@@ -21,11 +21,11 @@ jobs:
             - run: npm run build
             # 打包镜像推送到阿里云容器镜像服务
             - name: Build the Docker image
-            run: |
+            run: 
             docker login --username=${{ secrets.DOCKER_USERNAME }} registry.cn-hangzhou.aliyuncs.com --password=${{ secrets.DOCKER_PASSWORD }}
             docker build -t bilibili-vue:latest .
             docker tag bilibili-vue registry.cn-hangzhou.aliyuncs.com/zlyyyy/bilibili-vue:latest
-          docker push registry.cn-hangzhou.aliyuncs.com/zlyyyy/bilibili-vue:latest # 推送
+            docker push registry.cn-hangzhou.aliyuncs.com/zlyyyy/bilibili-vue:latest # 推送
             - name: TranslateFile
               # uses: wangyucode/sftp-upload-action@24f8bb83383dc39bed201ee5da01475e6c38c568
               uses: wangyucode/sftp-upload-action@v1.1
