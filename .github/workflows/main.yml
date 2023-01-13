@@ -1,38 +1,31 @@
-# 发布项目到自己的服务器上的配置
-name: DeployServer
-# on 表示触发actions的条件
-on:
-    push:
-        branches: [main] #main分支在push的时候会触发
-    pull_request:
-        branches: [main] #main分支在PR的时候会触发
- 
+name: Docker Image CI # Actions名称
+on: [push] # 执行时机
 jobs:
-    build:
-        runs-on: ubuntu-latest #nodejs执行的操作系统
  
-        steps:
-            - uses: actions/checkout@v3 #拉取你的最新代码
-            - name: Use Node.js
-              uses: actions/setup-node@v3
-              with:
-                  node-version: "14.x"  # 指定你的node版本
-            - run: npm install
-            - run: npm run build
-            # 打包镜像推送到阿里云容器镜像服务
-            - name: Build the Docker image
-            - run: 
-            docker login --username=${{ secrets.DOCKER_USERNAME }} registry.cn-hangzhou.aliyuncs.com --password=${{ secrets.DOCKER_PASSWORD }}
-            docker build -t bilibili-vue:latest .
-            docker tag bilibili-vue registry.cn-hangzhou.aliyuncs.com/zlyyyy/bilibili-vue:latest
-            docker push registry.cn-hangzhou.aliyuncs.com/zlyyyy/bilibili-vue:latest # 推送
-            - name: TranslateFile
-              # uses: wangyucode/sftp-upload-action@24f8bb83383dc39bed201ee5da01475e6c38c568
-              uses: wangyucode/sftp-upload-action@v1.1
-              with:
-                  host: ${{ secrets.HOST }} #你的nginx服务器公网ip
-                  port: ${{ secrets.PORT }} #你的nginx服务器ssh端口
-                  username: ${{ secrets.USERNAME }} #你的nginx服务器用户名
-                  password: ${{ secrets.PASSWORD }} #你的nginx服务器密码
-                  localDir: "dist" #你vue项目build好的文件的路径,每次服务器上会自动删除对应的文件夹后重新覆盖
-                  remoteDir: ${{ secrets.REMOTE_PATH }} #你要把你build好的文件夹放到nginx服务器上的什么位置，一般都是nginx配置的站点路径
+# 这里我使用的是yarn，想用npm的同学将yarn命令修改为npm命令即可
+build:
+runs-on: ubuntu-latest
+steps:
+- name: checkout
+uses: actions/checkout@master
+# 安装依赖
+- name: install
+run: yarn
+# 打包
+- name: build project
+run: yarn run build
+ 
+# 打包镜像推送到阿里云容器镜像服务
+- name: Build the Docker image
+run: |
+docker login --username=${{ secrets.DOCKER_USERNAME }} registry.cn-hangzhou.aliyuncs.com --password=${{ secrets.DOCKER_PASSWORD }}
+docker build -t bilibili-vue:latest .
+docker tag bilibili-vue registry.cn-hangzhou.aliyuncs.com/zlyyyy/bilibili-vue:latest
+docker push registry.cn-hangzhou.aliyuncs.com/zlyyyy/bilibili-vue:latest # 推送
+- name: ssh docker login # 使用appleboy/ssh-action@master登录服务器执行拉取镜像脚本，服务器ip、用户名、密码配置方式同容器镜像服务配置方式一样
+uses: appleboy/ssh-action@master
+with:
+        host: ${{ secrets.HOST }} 
+username: ${{ secrets.USERNAME }}
+password: ${{ secrets.PASSWORD }}
+script: cd ~ && sh bilibili-vue-deploy.sh ${{ secrets.DOCKER_USERNAME }} ${{ secrets.DOCKER_PASSWORD }}
