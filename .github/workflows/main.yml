@@ -1,51 +1,26 @@
-# This is a basic workflow to help you get started with Actions
- 
-name: browser-home-page
- 
-# Controls when the workflow will run
-on:
-  # Triggers the workflow on push or pull request events but only for the master branch
-  push:
-    branches: [ main ]
- 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
- 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+name: Continuous Deploy #action名称
+on: [push] #在推送的时候运行此action
+
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
- 
-    # Steps represent a sequence of tasks that will be executed as part of the 
- 
-#关键配置
-jobs:
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - name: install node.js
-        uses: actions/setup-node@v3.0.0 
-        with: 
-              node-version: "14.X"
-      - name: install deps
-        run: npm install
-      - name: build app
-        run: npm run build
-      - name: copy file via ssh key
-        uses: appleboy/scp-action@master
-        with:
-            source: 'dist'
-    # SSH address  服务器地址
-            host: ${{ secrets.HOST }}
-    # Remote dir path  服务器下部署文件存放路径
-            target: ${{ secrets.REMOTE_PATH }}
-    # SSH Port  服务器端口
-            port: 22
-    # SSH User name   用户名
-            username: ${{ secrets.USERNAME }}
-    # SSH User password  用户密码
-          #  password: ${{ secrets.PASSWORD }}
-    # key  密匙
-            key: ${{ secrets.SSH_PRIVATE_KEY }}
+  deploy_job: # 工作名称
+    runs-on: ubuntu-latest  #运行环境
+    name: build
+    steps: # 步骤
+      # check out the repository
+      - name: Checkout    
+        uses: actions/checkout@v3    #这里使用了github官方提供的action,checkout项目到虚拟机上
+
+      - name: Install Dependencies
+        run: yarn #执行的命令
+      - name: Build
+        run: yarn build
+
+      # 利用action把build好的文件上传到服务器/workspace/react-note路径下,需要确认此目录已在服务端创建
+      - name: deploy file to server
+        uses: wlixcc/SFTP-Deploy-Action@v1.0 
+        with:  
+          username: 'root'   #ssh user name
+          server: '${{ secrets.HOST }}' #引用之前创建好的secret
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }} #引用之前创建好的secret
+          local_path: './dist/*'  # 对应我们项目build的文件夹路径
+          remote_path: '/root/e'  # 将项目build文件夹部署到远程文件夹
