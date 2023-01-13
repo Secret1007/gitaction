@@ -16,11 +16,12 @@ jobs:
         run: yarn build
 
       # 利用action把build好的文件上传到服务器/workspace/react-note路径下,需要确认此目录已在服务端创建
-      - name: deploy file to server
-        uses: wlixcc/SFTP-Deploy-Action@v1.0 
-        with:  
-          username: 'root'   #ssh user name
-          server: '${{ secrets.HOST }}' #引用之前创建好的secret
-          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }} #引用之前创建好的secret
-          local_path: './dist/*'  # 对应我们项目build的文件夹路径
-          remote_path: '/root/e'  # 将项目build文件夹部署到远程文件夹
+      - name: Deploy
+        uses: easingthemes/ssh-deploy@v2.0.7
+        env:
+            SSH_PRIVATE_KEY: ${{ env.SSH_PRIVATE_KEY }}
+            ARGS: '-avz --delete'
+            SOURCE: 'dist/'
+            REMOTE_HOST: ${{ env.HOST }}
+            REMOTE_USER: ${{ env.USERNAME }}
+            TARGET: /root/e # 服务器目标路径
