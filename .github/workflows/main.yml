@@ -21,7 +21,7 @@ jobs:
             - run: npm run build
             # 打包镜像推送到阿里云容器镜像服务
             - name: Build the Docker image
-            run: 
+            - run: 
             docker login --username=${{ secrets.DOCKER_USERNAME }} registry.cn-hangzhou.aliyuncs.com --password=${{ secrets.DOCKER_PASSWORD }}
             docker build -t bilibili-vue:latest .
             docker tag bilibili-vue registry.cn-hangzhou.aliyuncs.com/zlyyyy/bilibili-vue:latest
