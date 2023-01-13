@@ -1,27 +1,31 @@
-name: Continuous Deploy #action名称
-on: [push] #在推送的时候运行此action
-
+# 发布项目到自己的服务器上的配置
+name: DeployServer
+# on 表示触发actions的条件
+on:
+    push:
+        branches: [main] #main分支在push的时候会触发
+    pull_request:
+        branches: [main] #main分支在PR的时候会触发
+ 
 jobs:
-  deploy_job: # 工作名称
-    runs-on: ubuntu-latest  #运行环境
-    name: build
-    steps: # 步骤
-      # check out the repository
-      - name: Checkout    
-        uses: actions/checkout@v3    #这里使用了github官方提供的action,checkout项目到虚拟机上
-
-      - name: Install Dependencies
-        run: yarn #执行的命令
-      - name: Build
-        run: yarn build
-
-      # 利用action把build好的文件上传到服务器/workspace/react-note路径下,需要确认此目录已在服务端创建
-      - name: Deploy
-        uses: easingthemes/ssh-deploy@v2.0.7
-        env:
-            SSH_PRIVATE_KEY: ${{ env.SSH_PRIVATE_KEY }}
-            ARGS: '-avz --delete'
-            SOURCE: 'dist/'
-            REMOTE_HOST: ${{ env.HOST }}
-            REMOTE_USER: ${{ env.USERNAME }}
-            TARGET: /root/e # 服务器目标路径
+    build:
+        runs-on: ubuntu-latest #nodejs执行的操作系统
+ 
+        steps:
+            - uses: actions/checkout@v3 #拉取你的最新代码
+            - name: Use Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "14.x"  # 指定你的node版本
+            - run: npm install
+            - run: npm run build
+            - name: TranslateFile
+              # uses: wangyucode/sftp-upload-action@24f8bb83383dc39bed201ee5da01475e6c38c568
+              uses: wangyucode/sftp-upload-action@v1.1
+              with:
+                  host: ${{ secrets.HOST }} #你的nginx服务器公网ip
+                  port: ${{ secrets.PORT }} #你的nginx服务器ssh端口
+                  username: ${{ secrets.USERNAME }} #你的nginx服务器用户名
+                  password: ${{ secrets.PASSWORD }} #你的nginx服务器密码
+                  localDir: "dist" #你vue项目build好的文件的路径,每次服务器上会自动删除对应的文件夹后重新覆盖
+                  remoteDir: ${{ secrets.REMOTE_PATH }} #你要把你build好的文件夹放到nginx服务器上的什么位置，一般都是nginx配置的站点路径
