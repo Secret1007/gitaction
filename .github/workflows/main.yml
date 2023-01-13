@@ -1,55 +1,52 @@
 # This is a basic workflow to help you get started with Actions
-
-name: CI
-
-# Controls when the action will run. 
+ 
+name: browser-home-page
+ 
+# Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ main ]
-
+    branches: [ master ]
+ 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
+ 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+ 
+    # Steps represent a sequence of tasks that will be executed as part of the 
+ 
+#关键配置
+job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2 #nodejs 环境
+      - name: install node.js
+        uses: actions/setup-node@v3.0.0 
+        with: 
+              node-version: "14.X"
+      - name: install deps
+        run: npm install
+      - name: build app
+        run: npm run build
+      - name: copy file via ssh key
+        uses: appleboy/scp-action@master
         with:
-          node-version: '14' #nodejs 版本
-      - run: yarn install #安装依赖
-      - run: yarn build #打包
-
-      - name: Tar dist file
-        run: |
-          tar -zcvf webapp.tar.gz dist # 打包dist文件夹
-      - name: Scp_upload_tar_file # 上传至服务器
-        uses: garygrossgarten/github-action-scp@release
-        with:
-          local: 'webapp.tar.gz'
-          remote: '/home/webapp.tar.gz'
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT }}
-      - name: Deploy_app_tar #解压压缩包
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT }}
-          script: |
-            cd /home/
-            rm -rf dist
-            tar -zxvf webapp.tar.gz
-            rm -rf /var/html/webapp
-            mv dist /var/html/webapp
+	#需要部署的文件地址
+            source: 'dist/*'
+    # SSH address  服务器地址
+            host: ${{ secrets.HOST }}
+    # Remote dir path  服务器下部署文件存放路径
+            target: ${{ secrets.REMOTE_PATH }}
+    # SSH Port  服务器端口
+            port: 22
+    # SSH User name   用户名
+            username: ${{ secrets.USERNAME }}
+    # SSH User password  用户密码
+          #  password: ${{ secrets.PASSWORD }}
+    # key  密匙
+            key: ${{ secrets.SSH_PRIVATE_KEY }}
